@@ -1,13 +1,13 @@
+#!/bin/bash
+
 # This script creates a CloudFormation stack that includes a DynamoDB table, an IAM role,
 # a Lambda function, and an API Gateway.  Then adds test item to table, deploys the API,
 # and tests the API endpoint with a GET request using curl.
 
-#!/bin/bash
-
-# Pull $STACK_NAME and $REGION from config-vars.sh
+# Pull $STACK_NAME and $AWS_REGION from config-vars.env
 source ./config-vars.env
 
-S3_TEMPLATE_URL="https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/stack-creation-files/dynamo-lambda-api-cf-stack.yaml"
+S3_TEMPLATE_URL="https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/stack-creation-files/dynamo-lambda-api-cf-stack.yaml"
 CAPABILITIES="CAPABILITY_NAMED_IAM"
 
 # Start from clean slate.  Delete this CloudFormation stack if it already exists.
@@ -18,7 +18,7 @@ aws cloudformation create-stack \
 --stack-name $STACK_NAME \
 --template-url $S3_TEMPLATE_URL \
 --parameters ParameterKey=S3BucketName,ParameterValue=$BUCKET_NAME \
---region $REGION \
+--region $AWS_REGION \
 --capabilities $CAPABILITIES
 
 # Wait for stack creation to complete
@@ -53,7 +53,7 @@ fi
 # Get API Gateway API ID and Deploy API
 echo "⏳ Getting API Gateway API ID and deploying API..."
 API_ID=$(aws apigateway get-rest-apis \
- --region $REGION \
+ --region $AWS_REGION \
  --query "items[?name=='ProjectsAPI'].id" \
  --output text)
 
@@ -75,7 +75,7 @@ else
 fi
 
 # Get API Gateway endpoint URL
-INVOKE_URL_GET_ENDPOINT="https://${API_ID}.execute-api.${REGION}.amazonaws.com/prod/projects"
+INVOKE_URL_GET_ENDPOINT="https://${API_ID}.execute-api.${AWS_REGION}.amazonaws.com/prod/projects"
 
 # Test API Gateway endpoint with GET request using curl
 GET_REQUEST_WITH_PARAM="$INVOKE_URL_GET_ENDPOINT?userId=superman"
@@ -83,13 +83,12 @@ echo "Endpoint URL: $INVOKE_URL_GET_ENDPOINT"
 echo "Testing GET endpoint with 'curl $GET_REQUEST_WITH_PARAM' ..."
 EXPECTED_JSON='[{"projectId":"save-the-day","strategy":"speed","userId":"superman"}]'
 RESPONSE=$(curl -s "$GET_REQUEST_WITH_PARAM")
-echo "Response: $RESPONSE"
 
 EXPECTED_SORTED=$(echo "$EXPECTED_JSON" | jq -S .)
 RESPONSE_SORTED=$(echo "$RESPONSE" | jq -S .)
 
-echo "Expected: $EXPECTED_SORTED"
-echo "Actual: $RESPONSE_SORTED"
+echo "Expected response: $EXPECTED_SORTED"
+echo "Actual response: $RESPONSE_SORTED"
 
 if [ "$RESPONSE_SORTED" = "$EXPECTED_SORTED" ]; then
 echo "✅ API response content is correct!"

@@ -8,18 +8,18 @@ STEPS
 
 1. Clone this repo or download the .zip and extract.
 2. In your AWS Account, create a new bucket and name it whatever you like (default settings fine).
-3. From the repo you just cloned/downloaded, upload folder 'stack-creation-files' directly into your bucket. (Folder includes the CloudFormation YAML file for the stack, the .zip file with small Node.js server app for the Lambda, an env file for defining config variables, a bash script to create the stack, add DynamoDB item, deploy API, and then test it), and another bash script to delete the stack
-4. In file config-vars.env, change REGION and BUCKET_NAME to match the bucket you just created.
+4. In the local repo you just cloned/downloaded, change AWS_REGION and BUCKET_NAME in file stack-creation-files/config-vars.env, to match the bucket you just created.
 5. Save changes.
+3.  Upload entire 'stack-creation-files' folder directly into your bucket. (Folder includes the CloudFormation YAML file for the stack, the .zip file with small Node.js server app for the Lambda, an env file for defining config variables, a bash script to create the stack, add DynamoDB item, deploy API, and then test it), and another bash script to delete the stack
 6. In your AWS console, go into the CloudShell environment, and run the following three comands, substituting your own bucket name:
 
-    - ```aws s3 sync "s3://your-bucket-name/stack-creation-files/" "/tmp/stack-creation-files"```  
-    - ```cd ./tmp/stack-creation-files```  
+    - ```aws s3 sync "s3://your-bucket-name/stack-creation-files/" "/tmp/stack-creation-files" --exact-timestamp```  
+    - ```cd /tmp/stack-creation-files```  
     - ```bash create-stack-and-test-api-endpoint.sh```
 
     *Output should show several check marks, and end with JSON content from API response: [{"projectId":"save-the-day","strategy":"speed","userId":"superman"}]
 
-7. If not using long-term, delete stack with:  
+7. If not using long-term, delete stack from command line, within the same directory:  
     - ```bash delete-stack.sh```
 
 <br>
