@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Stack for Lambda, DynamoDB, and API Gateway integration'
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: "The name of the S3 bucket for this exercise"
+
+Resources:
+# IAM Role for Lambda with DynamoDB access
+  LambdaDynamoDBRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaDynamoDBRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+
+  # DynamoDB Table
+  ProjectsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Projects
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: projectId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: projectId
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+  # Lambda Function
+  LambdaFunctionGetRequest:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: LambdaFunctionGetRequest
+      Handler: index.handler
+      Role: !GetAtt LambdaDynamoDBRole.Arn
+      Runtime: nodejs22.x
+      Timeout: 10
+      Code:
+        S3Bucket: !Ref S3BucketName
+        S3Key: stack-creation-files/get-projects-lambda.zip
+
+  # API Gateway REST API
+  ProjectsApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: ProjectsAPI
+      Description: API for projects management
+
+  # API Resource (projects)
+  ProjectsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ProjectsApi
+      ParentId: !GetAtt ProjectsApi.RootResourceId
+      PathPart: projects
+
+  # GET Method
+  ProjectsGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ProjectsApi
+      ResourceId: !Ref ProjectsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunctionGetRequest.Arn}/invocations
+
+  # API Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ProjectsGetMethod
+    Properties:
+      RestApiId: !Ref ProjectsApi
+
+  # API Stage
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiDeployment
+      RestApiId: !Ref ProjectsApi
+      StageName: prod
+
+  # Lambda Permission for API Gateway
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt LambdaFunctionGetRequest.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ProjectsApi}/*/*/*
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ProjectsApi}.execute-api.${AWS::Region}.amazonaws.com/prod/projects
