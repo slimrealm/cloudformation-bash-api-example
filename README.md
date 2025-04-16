@@ -1,16 +1,17 @@
-### This process creates a CloudFormation stack that includes a DynamoDB table, an IAM role, a Lambda function, and an API Gateway. It then adds a test item to table, deploys the API, and tests the API endpoint with a GET request, verifying correct response.
+### Demonstration of using CloudFormation to create a stack that includes a DynamoDB table, an IAM role, a Lambda function, and an API Gateway.  A bash script calls the CloudFormation YAML, adds a test item to DynamoDB table, deploys the API, and tests the API endpoint with a GET request, verifying correct response.
 
+Please feel free to run it yourself!
 You will need:
 
-- An AWS account. (If AWS acct is less than 12 months old and you're not close to limits for these services, this should all be within free tier)
+- An AWS account. (As of April 2025, If AWS acct is less than 12 months old and not close to limits for these services, it should all be within free tier)
 
-STEPS
+**STEPS**
 
 1. Clone this repo or download the .zip and extract.
-2. In your AWS Account, create a new bucket and name it whatever you like (default settings fine).
-4. In the local repo you just cloned/downloaded, change AWS_REGION and BUCKET_NAME in file stack-creation-files/config-vars.env, to match the bucket you just created.
-5. Save changes.
-3.  Upload entire 'stack-creation-files' folder directly into your bucket. (Folder includes the CloudFormation YAML file for the stack, the .zip file with small Node.js server app for the Lambda, an env file for defining config variables, a bash script to create the stack, add DynamoDB item, deploy API, and then test it), and another bash script to delete the stack
+2. In your AWS Account, create a new bucket and name it whatever you like (default settings are fine).
+3. In the local repo you just cloned/downloaded, open file ```stack-creation-files/config-vars.env```, and update the values of BUCKET_NAME and AWS_REGION, to match the bucket you just created.
+4. Save changes.
+5.  In your new S3 bucket, 'Upload Folder' -- the entire ```stack-creation-files``` folder. (Folder includes the CloudFormation YAML file for the stack, the .zip file with small Node.js server app for the Lambda, an env file for defining config variables, a bash script to create the stack, add DynamoDB item, deploy API, and then test it), and another bash script to delete the stack
 6. In your AWS console, go into the CloudShell environment, and run the following three comands, substituting your own bucket name:
 
     - ```aws s3 sync "s3://your-bucket-name/stack-creation-files/" "/tmp/stack-creation-files" --exact-timestamp```  
