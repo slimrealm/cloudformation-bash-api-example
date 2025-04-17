@@ -6,6 +6,7 @@ Please feel free to run it yourself!
 You will need:
 
 - An AWS account (As of April 2025, if the account is less than 12 months old and not close to limits for these services, it should all be within free tier.)
+- Basic familiarity with AWS console (or knowledge of how to perform steps with AWS CLI).
 
 <br>
 
@@ -14,7 +15,7 @@ You will need:
 ---
 
 1. Clone this repo - or download the .zip and extract.
-2. In your AWS Account, create a new bucket and name it whatever you like (default settings are fine).
+2. In your AWS Account, create a new S3 bucket and name it whatever you like (default settings are fine).
 3. In the local repo you just cloned/downloaded, open file ```stack-creation-files/config-vars.env```, and update the values of BUCKET_NAME and AWS_REGION, to match the bucket you just created.
 4. Save changes.
 5.  In your new S3 bucket, 'Upload Folder' -- upload just the ```stack-creation-files``` folder*.
